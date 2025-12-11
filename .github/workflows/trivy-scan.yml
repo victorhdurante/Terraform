@@ -15,17 +15,45 @@ jobs:
       - name: Baixar código
         uses: actions/checkout@v4
       
-      - name: Executar Trivy (HTML)
+      - name: Executar Trivy (JSON)
         uses: aquasecurity/trivy-action@master
         with:
           scan-type: 'config'
           scan-ref: '.'
-          format: 'html'
-          output: 'trivy-report.html'
+          format: 'json'
+          output: 'trivy-results.json'
           severity: 'CRITICAL,HIGH,MEDIUM,LOW'
+      
+      - name: Converter JSON para HTML
+        run: |
+          cat > report.html << 'EOF'
+          <!DOCTYPE html>
+          <html>
+          <head>
+            <title>Trivy Security Report</title>
+            <style>
+              body { font-family: Arial, sans-serif; margin: 20px; background: #f5f5f5; }
+              h1 { color: #333; }
+              .critical { background: #ff4444; color: white; padding: 10px; margin: 10px 0; }
+              .high { background: #ff9800; color: white; padding: 10px; margin: 10px 0; }
+              .medium { background: #ffeb3b; color: black; padding: 10px; margin: 10px 0; }
+              .low { background: #4caf50; color: white; padding: 10px; margin: 10px 0; }
+              pre { background: #f0f0f0; padding: 10px; overflow-x: auto; }
+            </style>
+          </head>
+          <body>
+            <h1>🔒 Trivy Security Scan Report</h1>
+            <p>Data: $(date)</p>
+            <h2>Resultados:</h2>
+            <pre>$(cat trivy-results.json | jq -r '.Results[] | "Target: \(.Target)\nMisconfigurations: \(.Misconfigurations | length)\n"')</pre>
+            <h2>JSON Completo:</h2>
+            <pre>$(cat trivy-results.json | jq '.')</pre>
+          </body>
+          </html>
+          EOF
       
       - name: Upload do relatório HTML
         uses: actions/upload-artifact@v4
         with:
           name: trivy-html-report
-          path: trivy-report.html
+          path: report.html
