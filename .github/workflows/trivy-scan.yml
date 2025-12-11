@@ -1,0 +1,24 @@
+name: Trivy Security Scan
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  trivy-scan:
+    name: Scan Terraform com Trivy
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Baixar código do repositório
+        uses: actions/checkout@v4
+      
+      - name: Executar Trivy
+        uses: aquasecurity/trivy-action@master
+        with:
+          scan-type: 'config'
+          scan-ref: '.'
+          format: 'table'
+          severity: 'CRITICAL,HIGH,MEDIUM'
