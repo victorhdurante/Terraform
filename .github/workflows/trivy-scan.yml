@@ -1,28 +1,33 @@
-name: Trivy Scan - HTML Report
+name: Trivy Scan - JSON Format
 
 on:
   workflow_dispatch:  # Você executa manualmente quando quiser testar
 
 jobs:
-  trivy-html:
-    name: Gerar relatório HTML
+  trivy-json:
+    name: Scan com saída JSON
     runs-on: ubuntu-latest
     
     steps:
       - name: Baixar código
         uses: actions/checkout@v4
       
-      - name: Executar Trivy (HTML)
+      - name: Executar Trivy (JSON)
         uses: aquasecurity/trivy-action@master
         with:
           scan-type: 'config'
           scan-ref: '.'
-          format: 'html'
-          output: 'trivy-report.html'
-          severity: 'CRITICAL,HIGH,MEDIUM,LOW'
+          format: 'json'
+          output: 'trivy-results.json'
+          severity: 'CRITICAL,HIGH,MEDIUM'
       
-      - name: Upload do relatório HTML
+      - name: Mostrar JSON formatado
+        run: |
+          echo "📊 Resultados do scan em JSON:"
+          cat trivy-results.json | jq '.'
+      
+      - name: Upload do arquivo JSON
         uses: actions/upload-artifact@v4
         with:
-          name: trivy-html-report
-          path: trivy-report.html
+          name: trivy-json-results
+          path: trivy-results.json
