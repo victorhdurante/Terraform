@@ -26,7 +26,11 @@ jobs:
       
       - name: Converter JSON para HTML
         run: |
-          cat > report.html << 'EOF'
+          REPORT_DATE=$(date)
+          RESULTS=$(cat trivy-results.json | jq -r '.Results[] | "Target: \(.Target)\nMisconfigurations: \(.Misconfigurations | length)\n"')
+          JSON_FULL=$(cat trivy-results.json | jq '.')
+          
+          cat > report.html << EOF
           <!DOCTYPE html>
           <html>
           <head>
@@ -34,20 +38,23 @@ jobs:
             <style>
               body { font-family: Arial, sans-serif; margin: 20px; background: #f5f5f5; }
               h1 { color: #333; }
-              .critical { background: #ff4444; color: white; padding: 10px; margin: 10px 0; }
-              .high { background: #ff9800; color: white; padding: 10px; margin: 10px 0; }
-              .medium { background: #ffeb3b; color: black; padding: 10px; margin: 10px 0; }
-              .low { background: #4caf50; color: white; padding: 10px; margin: 10px 0; }
-              pre { background: #f0f0f0; padding: 10px; overflow-x: auto; }
+              .critical { background: #ff4444; color: white; padding: 10px; margin: 10px 0; border-radius: 5px; }
+              .high { background: #ff9800; color: white; padding: 10px; margin: 10px 0; border-radius: 5px; }
+              .medium { background: #ffeb3b; color: black; padding: 10px; margin: 10px 0; border-radius: 5px; }
+              .low { background: #4caf50; color: white; padding: 10px; margin: 10px 0; border-radius: 5px; }
+              pre { background: #f0f0f0; padding: 15px; overflow-x: auto; border-radius: 5px; }
+              .container { background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
             </style>
           </head>
           <body>
-            <h1>🔒 Trivy Security Scan Report</h1>
-            <p>Data: $(date)</p>
-            <h2>Resultados:</h2>
-            <pre>$(cat trivy-results.json | jq -r '.Results[] | "Target: \(.Target)\nMisconfigurations: \(.Misconfigurations | length)\n"')</pre>
-            <h2>JSON Completo:</h2>
-            <pre>$(cat trivy-results.json | jq '.')</pre>
+            <div class="container">
+              <h1>🔒 Trivy Security Scan Report</h1>
+              <p><strong>Data:</strong> $REPORT_DATE</p>
+              <h2>📊 Resumo dos Resultados:</h2>
+              <pre>$RESULTS</pre>
+              <h2>📄 JSON Completo:</h2>
+              <pre>$JSON_FULL</pre>
+            </div>
           </body>
           </html>
           EOF
