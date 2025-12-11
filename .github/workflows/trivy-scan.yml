@@ -1,7 +1,10 @@
 name: Trivy Scan - JSON Format
 
 on:
-  workflow_dispatch:  # Você executa manualmente quando quiser testar
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
 
 jobs:
   trivy-json:
@@ -21,10 +24,10 @@ jobs:
           output: 'trivy-results.json'
           severity: 'CRITICAL,HIGH,MEDIUM'
       
-      - name: Mostrar JSON formatado
+      - name: Mostrar resumo JSON
         run: |
-          echo "📊 Resultados do scan em JSON:"
-          cat trivy-results.json | jq '.'
+          echo "📊 Resumo dos resultados:"
+          cat trivy-results.json | jq '.Results[] | {Target: .Target, Misconfigurations: (.Misconfigurations | length)}'
       
       - name: Upload do arquivo JSON
         uses: actions/upload-artifact@v4
