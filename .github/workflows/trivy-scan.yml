@@ -1,4 +1,4 @@
-name: Trivy Scan - HTML Report
+name: Trivy Scan - Docker HTML
 
 on:
   push:
@@ -7,60 +7,28 @@ on:
     branches: [ main ]
 
 jobs:
-  trivy-html:
-    name: Gerar relatório HTML
+  trivy-docker:
+    name: Scan Docker Image - HTML Report
     runs-on: ubuntu-latest
     
     steps:
       - name: Baixar código
         uses: actions/checkout@v4
       
-      - name: Executar Trivy (JSON)
+      - name: Build Docker Image
+        run: |
+          docker build -t meu-projeto:latest .
+      
+      - name: Scan da imagem Docker (HTML)
         uses: aquasecurity/trivy-action@master
         with:
-          scan-type: 'config'
-          scan-ref: '.'
-          format: 'json'
-          output: 'trivy-results.json'
-          severity: 'CRITICAL,HIGH,MEDIUM,LOW'
-      
-      - name: Converter JSON para HTML
-        run: |
-          REPORT_DATE=$(date)
-          RESULTS=$(cat trivy-results.json | jq -r '.Results[] | "Target: \(.Target)\nMisconfigurations: \(.Misconfigurations | length)\n"')
-          JSON_FULL=$(cat trivy-results.json | jq '.')
-          
-          cat > report.html << EOF
-          <!DOCTYPE html>
-          <html>
-          <head>
-            <title>Trivy Security Report</title>
-            <style>
-              body { font-family: Arial, sans-serif; margin: 20px; background: #f5f5f5; }
-              h1 { color: #333; }
-              .critical { background: #ff4444; color: white; padding: 10px; margin: 10px 0; border-radius: 5px; }
-              .high { background: #ff9800; color: white; padding: 10px; margin: 10px 0; border-radius: 5px; }
-              .medium { background: #ffeb3b; color: black; padding: 10px; margin: 10px 0; border-radius: 5px; }
-              .low { background: #4caf50; color: white; padding: 10px; margin: 10px 0; border-radius: 5px; }
-              pre { background: #f0f0f0; padding: 15px; overflow-x: auto; border-radius: 5px; }
-              .container { background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
-            </style>
-          </head>
-          <body>
-            <div class="container">
-              <h1>🔒 Trivy Security Scan Report</h1>
-              <p><strong>Data:</strong> $REPORT_DATE</p>
-              <h2>📊 Resumo dos Resultados:</h2>
-              <pre>$RESULTS</pre>
-              <h2>📄 JSON Completo:</h2>
-              <pre>$JSON_FULL</pre>
-            </div>
-          </body>
-          </html>
-          EOF
+          scan-type: 'image'
+          image-ref: 'meu-projeto:latest'
+          format: 'html'
+          output: 'trivy-docker-report.html'
       
       - name: Upload do relatório HTML
         uses: actions/upload-artifact@v4
         with:
-          name: trivy-html-report
-          path: report.html
+          name: trivy-docker-html-report
+          path: trivy-docker-report.html
