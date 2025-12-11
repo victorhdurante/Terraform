@@ -1,44 +1,33 @@
-name: Trivy Security Scan
+name: Trivy Scan - JSON Format
 
 on:
-  push:
-    branches: [ main ]
-  pull_request:
-    branches: [ main ]
-
-permissions:
-  contents: read
-  security-events: write  # Necessário para enviar para aba Security
+  workflow_dispatch:  # Você executa manualmente quando quiser testar
 
 jobs:
-  trivy-scan:
-    name: Scan Terraform com Trivy
+  trivy-json:
+    name: Scan com saída JSON
     runs-on: ubuntu-latest
     
     steps:
-      - name: Baixar código do repositório
+      - name: Baixar código
         uses: actions/checkout@v4
       
-      - name: Executar Trivy (formato SARIF)
+      - name: Executar Trivy (JSON)
         uses: aquasecurity/trivy-action@master
         with:
           scan-type: 'config'
           scan-ref: '.'
-          format: 'sarif'
-          output: 'trivy-results.sarif'
+          format: 'json'
+          output: 'trivy-results.json'
           severity: 'CRITICAL,HIGH,MEDIUM'
       
-      - name: Enviar resultados para GitHub Security
-        uses: github/codeql-action/upload-sarif@v3
-        if: always()
-        with:
-          sarif_file: 'trivy-results.sarif'
+      - name: Mostrar JSON formatado
+        run: |
+          echo "📊 Resultados do scan em JSON:"
+          cat trivy-results.json | jq '.'
       
-      - name: Mostrar resumo no terminal também
-        uses: aquasecurity/trivy-action@master
-        if: always()
+      - name: Upload do arquivo JSON
+        uses: actions/upload-artifact@v4
         with:
-          scan-type: 'config'
-          scan-ref: '.'
-          format: 'table'
-          severity: 'CRITICAL,HIGH'
+          name: trivy-json-results
+          path: trivy-results.json
